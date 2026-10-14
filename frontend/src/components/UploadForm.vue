@@ -81,12 +81,12 @@ async function submit() {
 </script>
 
 <template>
-  <div class="rounded-lg border border-gray-200 bg-white p-4 shadow">
-    <h3 class="mb-3 text-sm font-semibold text-gray-900">Upload Panel</h3>
+  <div class="surface p-5">
+    <h3 class="mb-3 text-sm font-semibold text-white">Upload panel</h3>
 
     <div
       class="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-4 py-8 text-center transition-colors"
-      :class="dragOver ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-gray-400'"
+      :class="dragOver ? 'border-violet-400 bg-violet-500/10' : 'border-white/15 bg-white/[0.03] hover:border-white/30'"
       @dragover.prevent="dragOver = true"
       @dragleave="dragOver = false"
       @drop.prevent="onDrop"
@@ -110,13 +110,13 @@ async function submit() {
       v-model="motionPrompt"
       type="text"
       placeholder="Motion prompt (optional), e.g. camera slowly zooms in"
-      class="mt-3 w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none"
+      class="field mt-3"
     />
 
     <p v-if="error" class="mt-2 text-sm text-red-500">{{ error }}</p>
 
     <button
-      class="mt-3 w-full rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+      class="btn-primary mt-3 w-full"
       :disabled="!file || uploading"
       @click="submit"
     >

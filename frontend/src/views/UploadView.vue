@@ -162,27 +162,27 @@ async function resolveVideo(jobId) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 p-6">
-    <div class="max-w-3xl mx-auto space-y-6">
+  <main class="app-shell">
+    <div class="mx-auto max-w-4xl space-y-6">
       <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold">New render</h1>
-        <router-link to="/" class="text-blue-600 hover:underline">Projects</router-link>
+        <div><p class="eyebrow">Create</p><h1 class="mt-2 text-3xl font-black tracking-tight">New render</h1></div>
+        <router-link to="/" class="btn-secondary">← Projects</router-link>
       </div>
 
-      <p v-if="error" class="bg-red-50 text-red-600 text-sm p-3 rounded">{{ error }}</p>
+      <p v-if="error" class="rounded-xl border border-rose-400/20 bg-rose-500/10 p-3 text-sm text-rose-300">{{ error }}</p>
 
-      <section class="bg-white rounded-lg shadow p-4">
+      <section class="surface p-6">
         <h2 class="font-semibold mb-3">1. Project</h2>
         <div v-if="!project" class="flex gap-2">
-          <input v-model="title" placeholder="Comic title" class="flex-1 border rounded px-3 py-2" />
-          <button @click="createProject" :disabled="busy" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50">
+          <input v-model="title" placeholder="Comic title" class="field flex-1" />
+          <button @click="createProject" :disabled="busy" class="btn-primary">
             Create
           </button>
         </div>
-        <p v-else class="text-sm text-gray-700">Project: <span class="font-medium">{{ project.title }}</span></p>
+        <p v-else class="text-sm text-slate-300">Project: <span class="font-medium text-white">{{ project.title }}</span></p>
       </section>
 
-      <section class="bg-white rounded-lg shadow p-4">
+      <section class="surface p-6">
         <h2 class="font-semibold mb-3">2. Panels</h2>
         <div class="flex gap-2 mb-3 text-sm">
           <button @click="uploadMode = 'file'" :class="uploadMode === 'file' ? 'font-bold' : 'text-gray-500'">Upload file</button>
@@ -196,17 +196,17 @@ async function resolveVideo(jobId) {
             <img v-if="previews[file.name]" :src="previews[file.name]" class="w-16 h-16 object-cover rounded" />
             <div class="flex-1">
               <p class="text-sm font-medium truncate">{{ file.name }}</p>
-              <input v-model="prompts[file.name]" placeholder="Motion prompt (optional)" class="w-full text-sm border rounded px-2 py-1 mt-1" />
+              <input v-model="prompts[file.name]" placeholder="Motion prompt (optional)" class="field mt-2" />
             </div>
           </div>
-          <button @click="uploadFiles" :disabled="busy || selectedFiles.length === 0" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50">
+          <button @click="uploadFiles" :disabled="busy || selectedFiles.length === 0" class="btn-primary">
             Upload panels
           </button>
         </div>
 
         <div v-else class="flex gap-2">
-          <input v-model="manualUrl" placeholder="https://... image URL" class="flex-1 border rounded px-3 py-2" />
-          <button @click="addManualPanel" :disabled="busy || !manualUrl" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50">
+          <input v-model="manualUrl" placeholder="https://... image URL" class="field flex-1" />
+          <button @click="addManualPanel" :disabled="busy || !manualUrl" class="btn-primary">
             Add
           </button>
         </div>
@@ -219,9 +219,9 @@ async function resolveVideo(jobId) {
         </ul>
       </section>
 
-      <section class="bg-white rounded-lg shadow p-4">
+      <section class="surface p-6">
         <h2 class="font-semibold mb-3">3. Render</h2>
-        <button @click="render" :disabled="!canRender" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50">
+        <button @click="render" :disabled="!canRender" class="btn-primary">
           Render {{ panels.length }} panel(s)
         </button>
 
@@ -239,5 +239,5 @@ async function resolveVideo(jobId) {
         </div>
       </section>
     </div>
-  </div>
+  </main>
 </template>

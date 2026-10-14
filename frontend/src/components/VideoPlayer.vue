@@ -11,6 +11,6 @@ defineProps({
     :poster="poster || undefined"
     controls
     playsinline
-    class="w-full rounded-lg bg-black"
+    class="w-full rounded-2xl border border-white/10 bg-black shadow-2xl"
   ></video>
 </template>

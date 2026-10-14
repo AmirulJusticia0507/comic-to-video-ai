@@ -90,7 +90,7 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 p-6">
+  <main class="app-shell">
     <div v-if="loading" class="text-gray-500">Loading...</div>
 
     <div v-else-if="error" class="text-red-500">{{ error }}</div>
@@ -98,11 +98,11 @@ onMounted(load)
     <div v-else-if="project" class="mx-auto max-w-5xl">
       <div class="mb-6 flex items-center justify-between">
         <div>
-          <router-link to="/" class="text-sm text-blue-600 hover:underline">&larr; Projects</router-link>
-          <h1 class="mt-1 text-2xl font-bold">{{ project.title }}</h1>
+          <router-link to="/" class="text-sm font-medium text-cyan-300 hover:text-cyan-200">&larr; Projects</router-link>
+          <h1 class="mt-2 text-3xl font-black tracking-tight">{{ project.title }}</h1>
         </div>
         <button
-          class="rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+          class="btn-primary"
           :disabled="rendering || selected.size === 0"
           @click="renderSelected"
         >
@@ -139,7 +139,7 @@ onMounted(load)
             <div
               v-for="panel in panels"
               :key="panel.id"
-              class="rounded-lg border border-gray-200 bg-white p-4 shadow"
+              class="surface p-4"
             >
               <div class="flex items-start gap-3">
                 <input
@@ -171,5 +171,5 @@ onMounted(load)
         </div>
       </div>
     </div>
-  </div>
+  </main>
 </template>

@@ -29,25 +29,17 @@ async function submit() {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50">
-    <form @submit.prevent="submit" class="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
-      <h1 class="text-2xl font-bold mb-6 text-center">Register</h1>
-      <div class="mb-4">
-        <label class="block text-sm font-medium mb-1">Email</label>
-        <input v-model="email" type="email" required class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-      </div>
-      <div class="mb-4">
-        <label class="block text-sm font-medium mb-1">Password</label>
-        <input v-model="password" type="password" required minlength="8" class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-      </div>
-      <p v-if="error" class="text-red-500 text-sm mb-4">{{ error }}</p>
-      <button type="submit" :disabled="loading" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50">
-        {{ loading ? 'Creating account...' : 'Register' }}
-      </button>
-      <p class="text-sm text-center mt-4">
-        Already have an account?
-        <router-link to="/login" class="text-blue-600 hover:underline">Login</router-link>
-      </p>
+  <main class="app-shell grid place-items-center">
+    <form @submit.prevent="submit" class="surface w-full max-w-md p-7 sm:p-10">
+      <div class="mb-8 flex items-center gap-3"><div class="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-violet-500 to-cyan-400 font-black text-slate-950">C</div><span class="font-semibold">Comic Motion Studio</span></div>
+      <p class="eyebrow">Start creating</p>
+      <h1 class="mt-3 text-3xl font-bold tracking-tight">Create your studio account</h1>
+      <p class="mt-2 text-sm leading-6 text-slate-400">Your first 10 generation credits are included.</p>
+      <div class="mt-8"><label class="mb-2 block text-sm font-medium text-slate-300">Email address</label><input v-model="email" type="email" required autocomplete="email" class="field" placeholder="you@example.com" /></div>
+      <div class="mt-5"><label class="mb-2 block text-sm font-medium text-slate-300">Password</label><input v-model="password" type="password" required minlength="8" autocomplete="new-password" class="field" placeholder="Minimum 8 characters" /></div>
+      <p v-if="error" class="mt-4 rounded-xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{{ error }}</p>
+      <button type="submit" :disabled="loading" class="btn-primary mt-6 w-full">{{ loading ? 'Creating account...' : 'Create account' }}</button>
+      <p class="mt-6 text-center text-sm text-slate-500">Already have an account? <router-link to="/login" class="font-semibold text-violet-300 hover:text-violet-200">Sign in</router-link></p>
     </form>
-  </div>
+  </main>
 </template>
