@@ -44,7 +44,17 @@ def main() -> int:
     except higgsfield_client.exceptions.CredentialsMissedError:
         print("BLOCKED: HF_KEY is not set (or still the placeholder) in backend/.env.local")
         return 2
+    except higgsfield_client.InsufficientCreditsError:
+        print("FAILED: account has insufficient credits. Top up at https://console.higgsfield.ai")
+        return 3
     except higgsfield_client.exceptions.HiggsfieldClientError as exc:
+        message = str(exc).lower()
+        if "credit" in message:
+            print("FAILED: not_enough_credits. Top up at https://console.higgsfield.ai")
+            return 3
+        if "credential" in message:
+            print("FAILED: invalid credentials. Check HF_KEY format (key-id:key-secret) in backend/.env.local")
+            return 4
         print(f"FAILED: {type(exc).__name__}: {exc}")
         return 1
 
