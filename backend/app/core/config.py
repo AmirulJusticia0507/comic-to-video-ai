@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
 
+    superadmin_email: str = ""
+    superadmin_password: str = ""
+
     storage_endpoint_url: str = ""
     storage_access_key: str = ""
     storage_secret_key: str = ""

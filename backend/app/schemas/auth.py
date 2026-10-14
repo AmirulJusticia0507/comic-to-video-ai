@@ -19,6 +19,7 @@ class UserResponse(BaseModel):
     id: uuid.UUID
     email: str
     credits: int
+    is_superadmin: bool
 
     model_config = {"from_attributes": True}
 
