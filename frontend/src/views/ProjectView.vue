@@ -18,6 +18,9 @@ const loading = ref(true)
 const error = ref('')
 const selected = ref(new Set())
 const rendering = ref(false)
+const bulkPrompt = ref('')
+const applyingPrompt = ref(false)
+const promptNotice = ref('')
 
 const allSelected = computed(() => {
   return panels.value.length > 0 && panels.value.every((p) => selected.value.has(p.id))
@@ -88,8 +91,36 @@ async function resolveImageUrls(list) {
   imageUrls.value = Object.fromEntries(entries)
 }
 
-async function renderSelected() {
-  const panelIds = panels.value.filter((p) => selected.value.has(p.id)).map((p) => p.id)
+async function applyPromptToAll() {
+  if (!bulkPrompt.value || applyingPrompt.value || panels.value.length === 0) return
+  applyingPrompt.value = true
+  promptNotice.value = ''
+  try {
+    const results = await Promise.allSettled(
+      panels.value.map((panel) =>
+        api(`/panels/${panel.id}`, { method: 'PATCH', body: { motion_prompt: bulkPrompt.value } }),
+      ),
+    )
+    let ok = 0
+    results.forEach((res, i) => {
+      if (res.status === 'fulfilled') {
+        ok += 1
+        panels.value[i].motion_prompt = res.value.motion_prompt
+      }
+    })
+    const failed = results.length - ok
+    promptNotice.value =
+      failed === 0
+        ? `Prompt diterapkan ke ${ok} panel`
+        : `Berhasil ${ok} panel, gagal ${failed} panel — coba lagi untuk yang gagal`
+  } catch (err) {
+    promptNotice.value = err.message
+  } finally {
+    applyingPrompt.value = false
+  }
+}
+
+async function renderSelected() {  const panelIds = panels.value.filter((p) => selected.value.has(p.id)).map((p) => p.id)
   if (panelIds.length === 0 || rendering.value) return
   rendering.value = true
   error.value = ''
@@ -158,6 +189,28 @@ onMounted(load)
           <p v-if="panels.length === 0" class="text-gray-500">
             No panels yet. Upload your first comic panel.
           </p>
+
+          <div v-if="panels.length" class="surface mb-4 p-4">
+            <label class="block text-sm font-semibold text-white" for="bulk-prompt">Motion prompt massal</label>
+            <p class="mt-1 text-xs text-slate-500">Ketik sekali, lalu terapkan ke semua {{ panels.length }} panel sekaligus.</p>
+            <div class="mt-2 flex gap-2">
+              <input
+                id="bulk-prompt"
+                v-model="bulkPrompt"
+                type="text"
+                placeholder="e.g. camera slowly zooms in"
+                class="field flex-1"
+              />
+              <button
+                class="btn-secondary shrink-0"
+                :disabled="!bulkPrompt || applyingPrompt"
+                @click="applyPromptToAll"
+              >
+                {{ applyingPrompt ? 'Menerapkan...' : `Terapkan ke ${panels.length} panel` }}
+              </button>
+            </div>
+            <p v-if="promptNotice" class="mt-2 text-xs text-green-500">{{ promptNotice }}</p>
+          </div>
 
           <div class="space-y-4">
             <div
