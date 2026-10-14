@@ -7,6 +7,10 @@ const routes = [
   { path: '/register', name: 'register', component: () => import('../views/RegisterView.vue'), meta: { guestOnly: true } },
   { path: '/upload', name: 'upload', component: () => import('../views/UploadView.vue'), meta: { requiresAuth: true } },
   { path: '/projects/:id', name: 'project', component: () => import('../views/ProjectView.vue'), meta: { requiresAuth: true } },
+  { path: '/privacy', name: 'privacy', component: () => import('../views/InfoView.vue') },
+  { path: '/cookies', name: 'cookies', component: () => import('../views/InfoView.vue') },
+  { path: '/help', name: 'help', component: () => import('../views/InfoView.vue') },
+  { path: '/about', name: 'about', component: () => import('../views/InfoView.vue') },
 ]
 
 const router = createRouter({

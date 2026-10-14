@@ -36,7 +36,7 @@ onMounted(async () => {
     <div class="mx-auto max-w-6xl">
       <nav class="mb-14 flex items-center justify-between">
         <div class="flex items-center gap-3"><div class="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-violet-500 to-cyan-400 font-black text-slate-950">C</div><div><p class="font-semibold leading-none">Comic Motion</p><p class="mt-1 text-[11px] uppercase tracking-widest text-slate-500">AI Studio</p></div></div>
-        <div class="flex items-center gap-3"><span v-if="auth.user?.credits != null" class="status-pill"><span class="mr-2 h-1.5 w-1.5 rounded-full bg-cyan-300"></span>{{ auth.user.credits }} credits</span><button @click="logout" class="btn-secondary">Sign out</button></div>
+        <div class="flex items-center gap-3"><span v-if="auth.user" class="status-pill"><span class="mr-2 h-1.5 w-1.5 rounded-full bg-cyan-300"></span>{{ auth.user.is_superadmin ? 'Unlimited credits' : `${auth.user.credits} credits` }}</span><span v-if="auth.user?.is_superadmin" class="status-pill border-violet-400/30 text-violet-300">Superadmin</span><button @click="logout" class="btn-secondary">Sign out</button></div>
       </nav>
       <header class="mb-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
         <div><p class="eyebrow">Your workspace</p><h1 class="mt-3 text-4xl font-black tracking-[-0.035em] sm:text-5xl">Bring every panel<br />to life.</h1><p class="mt-4 max-w-xl text-slate-400">Create, direct, and monitor your comic animation projects from one focused workspace.</p></div>

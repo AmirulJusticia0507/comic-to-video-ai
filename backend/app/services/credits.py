@@ -11,6 +11,8 @@ class InsufficientCreditsError(Exception):
 
 
 def deduct_credits(db: Session, user: User, amount: int = 1) -> None:
+    if user.is_superadmin:
+        return
     if user.credits < amount:
         raise InsufficientCreditsError(amount, user.credits)
     user.credits -= amount
