@@ -1,0 +1,67 @@
+# Database Schema (NeonDB / PostgreSQL)
+
+Sistem menggunakan database PostgreSQL di NeonDB dengan ORM **SQLAlchemy** (atau SQLModel).
+
+## Entity Relationship Diagram (ERD) Text Representation
+
+```text
+[USERS] 1 ──── < [PROJECTS] 1 ──── < [COMIC_PANELS] 1 ──── < [RENDER_JOBS]
+```
+
+---
+
+## Skema Tabel
+
+### 1. `users`
+Menyimpan informasi identitas dan kuota pengguna.
+
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | UUID | Primary Key, Default: `gen_random_uuid()` | ID Unik User |
+| `email` | VARCHAR(255) | Unique, Not Null | Email pendaftaran |
+| `hashed_password` | VARCHAR(255) | Not Null | Password terenkripsi |
+| `credits` | INTEGER | Default: `10` | Sisa kredit/kuota generasi |
+| `created_at` | TIMESTAMPTZ | Default: `NOW()` | Waktu dibuat |
+
+---
+
+### 2. `projects`
+Mewakili satu sesi pengerjaan komik yang bisa terdiri dari beberapa panel.
+
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | UUID | Primary Key | ID Unik Proyek |
+| `user_id` | UUID | Foreign Key (`users.id`) | Pemilik Proyek |
+| `title` | VARCHAR(255) | Not Null | Judul komik/proyek |
+| `status` | VARCHAR(50) | Default: `'draft'` | Status: `draft`, `processing`, `completed` |
+| `created_at` | TIMESTAMPTZ | Default: `NOW()` | Waktu dibuat |
+
+---
+
+### 3. `comic_panels`
+Menyimpan panel-panel gambar dari komik yang diunggah.
+
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | UUID | Primary Key | ID Unik Panel |
+| `project_id` | UUID | Foreign Key (`projects.id`) | Proyek terkait |
+| `image_url` | TEXT | Not Null | URL Gambar di S3/R2 |
+| `panel_order` | INTEGER | Not Null | Urutan urutan panel dalam komik |
+| `motion_prompt` | TEXT | Nullable | Deskripsi gerakan animasi untuk AI |
+| `created_at` | TIMESTAMPTZ | Default: `NOW()` | Waktu dibuat |
+
+---
+
+### 4. `render_jobs`
+Mencatat antrean dan status pengerjaan video animasi oleh AI Worker.
+
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | UUID | Primary Key | ID Unik Job |
+| `panel_id` | UUID | Foreign Key (`comic_panels.id`) | Panel komik yang di-render |
+| `status` | VARCHAR(50) | Default: `'PENDING'` | Status: `PENDING`, `PROCESSING`, `COMPLETED`, `FAILED` |
+| `progress` | INTEGER | Default: `0` | Persentase progres (0-100) |
+| `video_url` | TEXT | Nullable | URL Hasil Video Animasi |
+| `error_message` | TEXT | Nullable | Pesan error jika gagal |
+| `created_at` | TIMESTAMPTZ | Default: `NOW()` | Waktu job masuk |
+| `updated_at` | TIMESTAMPTZ | Default: `NOW()` | Waktu perubahan terakhir |
