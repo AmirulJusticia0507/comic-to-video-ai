@@ -4,6 +4,7 @@ import { api } from '../api/client'
 
 const props = defineProps({
   projectId: { type: String, required: true },
+  nextOrder: { type: Number, default: 0 },
 })
 
 const emit = defineEmits(['uploaded'])
@@ -47,27 +48,24 @@ async function submit() {
   uploading.value = true
   error.value = ''
   try {
-    const { upload_url, key } = await api(`/api/v1/projects/${props.projectId}/panels/upload-url`, {
+    const presigned = await api('/uploads/presigned-url', {
       method: 'POST',
-      body: {
-        content_type: file.value.type,
-        panel_order: Date.now(),
-        motion_prompt: motionPrompt.value || null,
-      },
+      body: { filename: file.value.name, content_type: file.value.type },
     })
 
-    const uploadRes = await fetch(upload_url, {
+    const uploadRes = await fetch(presigned.upload_url, {
       method: 'PUT',
       headers: { 'Content-Type': file.value.type },
       body: file.value,
     })
     if (!uploadRes.ok) throw new Error(`storage upload failed (${uploadRes.status})`)
 
-    const panel = await api(`/api/v1/projects/${props.projectId}/panels`, {
+    const panel = await api('/panels', {
       method: 'POST',
       body: {
-        image_url: key,
-        panel_order: Date.now(),
+        project_id: props.projectId,
+        image_url: presigned.key,
+        panel_order: props.nextOrder,
         motion_prompt: motionPrompt.value || null,
       },
     })
@@ -83,12 +81,12 @@ async function submit() {
 </script>
 
 <template>
-  <div class="rounded-lg border border-gray-800 bg-gray-900 p-4">
-    <h3 class="mb-3 text-sm font-semibold text-gray-200">Upload Panel</h3>
+  <div class="rounded-lg border border-gray-200 bg-white p-4 shadow">
+    <h3 class="mb-3 text-sm font-semibold text-gray-900">Upload Panel</h3>
 
     <div
       class="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-4 py-8 text-center transition-colors"
-      :class="dragOver ? 'border-indigo-500 bg-indigo-500/10' : 'border-gray-700 hover:border-gray-500'"
+      :class="dragOver ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-gray-400'"
       @dragover.prevent="dragOver = true"
       @dragleave="dragOver = false"
       @drop.prevent="onDrop"
@@ -101,24 +99,24 @@ async function submit() {
         class="hidden"
         @change="onFileChange"
       />
-      <p v-if="!file" class="text-sm text-gray-400">
+      <p v-if="!file" class="text-sm text-gray-500">
         Drag &amp; drop a comic panel here, or click to browse
       </p>
-      <p v-else class="text-sm font-medium text-gray-200">{{ file.name }}</p>
-      <p class="mt-1 text-xs text-gray-500">PNG, JPEG, or WebP — max 20 MB</p>
+      <p v-else class="text-sm font-medium text-gray-900">{{ file.name }}</p>
+      <p class="mt-1 text-xs text-gray-400">PNG, JPEG, or WebP — max 20 MB</p>
     </div>
 
     <input
       v-model="motionPrompt"
       type="text"
       placeholder="Motion prompt (optional), e.g. camera slowly zooms in"
-      class="mt-3 w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-200 placeholder-gray-500 focus:border-indigo-500 focus:outline-none"
+      class="mt-3 w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none"
     />
 
-    <p v-if="error" class="mt-2 text-sm text-red-400">{{ error }}</p>
+    <p v-if="error" class="mt-2 text-sm text-red-500">{{ error }}</p>
 
     <button
-      class="mt-3 w-full rounded bg-indigo-600 px-4 py-2 text-sm font-medium hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+      class="mt-3 w-full rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
       :disabled="!file || uploading"
       @click="submit"
     >

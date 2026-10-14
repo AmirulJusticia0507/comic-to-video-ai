@@ -1,9 +1,16 @@
 <script setup>
 defineProps({
   src: { type: String, required: true },
+  poster: { type: String, default: '' },
 })
 </script>
 
 <template>
-  <video :src="src" controls class="w-full rounded-lg bg-black"></video>
+  <video
+    :src="src"
+    :poster="poster || undefined"
+    controls
+    playsinline
+    class="w-full rounded-lg bg-black"
+  ></video>
 </template>

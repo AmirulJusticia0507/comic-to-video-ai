@@ -32,7 +32,10 @@ function logout() {
   window.location.href = '/login'
 }
 
-onMounted(load)
+onMounted(async () => {
+  await auth.fetchUser()
+  await load()
+})
 </script>
 
 <template>
@@ -57,7 +60,12 @@ onMounted(load)
         <div v-for="project in projects" :key="project.id" class="bg-white rounded-lg shadow p-4">
           <div class="flex items-center justify-between">
             <div>
-              <h2 class="text-lg font-semibold">{{ project.title }}</h2>
+              <router-link
+                :to="`/projects/${project.id}`"
+                class="text-lg font-semibold hover:underline"
+              >
+                {{ project.title }}
+              </router-link>
               <p class="text-xs text-gray-500 capitalize">{{ project.status }}</p>
             </div>
             <button @click="loadPanels(project.id)" class="text-sm text-blue-600 hover:underline">Show panels</button>

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
 const TOKEN_KEY = 'c2v_token'
 
 export const useAuthStore = defineStore('auth', {
@@ -18,7 +18,7 @@ export const useAuthStore = defineStore('auth', {
     },
     async fetchUser() {
       if (!this.token) return
-      const res = await fetch(`${API_BASE}/api/v1/auth/me`, {
+      const res = await fetch(`${API_BASE}/auth/me`, {
         headers: { Authorization: `Bearer ${this.token}` },
       })
       if (res.ok) {
@@ -28,7 +28,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     async login(email, password) {
-      const res = await fetch(`${API_BASE}/api/v1/auth/login`, {
+      const res = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -42,7 +42,7 @@ export const useAuthStore = defineStore('auth', {
       await this.fetchUser()
     },
     async register(email, password) {
-      const res = await fetch(`${API_BASE}/api/v1/auth/register`, {
+      const res = await fetch(`${API_BASE}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

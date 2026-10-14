@@ -5,6 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.auth import router as auth_router
 from app.api.generations import router as generations_router
+from app.api.jobs import router as jobs_router
+from app.api.panels import router as panels_router
+from app.api.projects import router as projects_router
+from app.api.uploads import router as uploads_router
 from app.api.ws import router as ws_router
 
 
@@ -29,6 +33,10 @@ app.add_middleware(
 
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(generations_router, prefix="/api/v1")
+app.include_router(jobs_router, prefix="/api/v1")
+app.include_router(panels_router, prefix="/api/v1")
+app.include_router(projects_router, prefix="/api/v1")
+app.include_router(uploads_router, prefix="/api/v1")
 app.include_router(ws_router)
 
 
