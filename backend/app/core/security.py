@@ -3,36 +3,33 @@ from datetime import datetime, timedelta, timezone
 import jwt
 from passlib.context import CryptContext
 
-from app.core.config import settings
+from app.core.config import get_settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
-
-
-def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
-    to_encode = data.copy()
-    now = datetime.now(tz=timezone.utc)
-    expire = now + (expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
-    to_encode.update({"exp": expire, "iat": now})
-    encoded_jwt = jwt.encode(
-        to_encode,
-        settings.SECRET_KEY,
-        algorithm=settings.ALGORITHM,
+def create_access_token(subject: str | int, expires_delta: timedelta | None = None) -> str:
+    settings = get_settings()
+    expire = datetime.now(timezone.utc) + (
+        expires_delta or timedelta(minutes=settings.access_token_expire_minutes)
     )
-    return encoded_jwt
+    to_encode = {"sub": str(subject), "exp": expire}
+    return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
 
 
-def decode_access_token(token: str) -> dict:
-    decoded = jwt.decode(
-        token,
-        settings.SECRET_KEY,
-        algorithms=[settings.ALGORITHM],
-    )
-    return decoded
+def decode_access_token(token: str) -> str | None:
+    settings = get_settings()
+    try:
+        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+        subject = payload.get("sub")
+        return str(subject) if subject else None
+    except jwt.PyJWTError:
+        return None

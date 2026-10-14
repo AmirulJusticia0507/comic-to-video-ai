@@ -1,20 +1,20 @@
+from collections.abc import Generator
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, declarative_base, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-from app.core.config import settings
+from app.core.config import get_settings
 
-engine = create_engine(settings.DATABASE_URL)
+engine = create_engine(get_settings().database_url, pool_pre_ping=True)
 
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine,
-)
-
-Base = declarative_base()
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, expire_on_commit=False)
 
 
-def get_db() -> Session:
+class Base(DeclarativeBase):
+    pass
+
+
+def get_db() -> Generator:
     db = SessionLocal()
     try:
         yield db

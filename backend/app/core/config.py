@@ -1,27 +1,26 @@
+from functools import lru_cache
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        extra="ignore",
-    )
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    DATABASE_URL: str = ""
+    database_url: str
+    redis_url: str = "redis://localhost:6379/0"
 
-    REDIS_URL: str = "redis://localhost:6379/0"
+    secret_key: str
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
 
-    SECRET_KEY: str = "change-me-with-a-strong-random-key"
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    storage_endpoint_url: str = ""
+    storage_access_key: str = ""
+    storage_secret_key: str = ""
+    storage_bucket_name: str = "comic-videos"
 
-    STORAGE_ENDPOINT_URL: str = ""
-    STORAGE_ACCESS_KEY: str = ""
-    STORAGE_SECRET_KEY: str = ""
-    STORAGE_BUCKET_NAME: str = ""
-
-    AI_PROVIDER_API_KEY: str = ""
+    ai_provider_api_key: str = ""
 
 
-settings = Settings()
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
