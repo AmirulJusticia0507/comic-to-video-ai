@@ -11,3 +11,5 @@ dist/
 .vscode/
 .idea/
 Thumbs.db
+.local/
+data/

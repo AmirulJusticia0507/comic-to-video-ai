@@ -1,6 +1,7 @@
 from functools import lru_cache
 
 import boto3
+from botocore.config import Config
 
 from app.core.config import get_settings
 
@@ -13,12 +14,17 @@ PRESIGNED_URL_EXPIRES_IN = 3600
 
 @lru_cache
 def _get_s3_client():
+    config = Config(
+        s3={"addressing_style": "path" if settings.storage_force_path_style else "virtual"},
+        signature_version="s3v4",
+    )
     return boto3.client(
         "s3",
         endpoint_url=settings.storage_endpoint_url or None,
         aws_access_key_id=settings.storage_access_key or None,
         aws_secret_access_key=settings.storage_secret_key or None,
-        region_name="auto",
+        region_name=settings.storage_region,
+        config=config,
     )
 
 

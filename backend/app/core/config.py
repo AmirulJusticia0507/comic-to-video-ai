@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     storage_access_key: str = ""
     storage_secret_key: str = ""
     storage_bucket_name: str = "comic-videos"
+    storage_region: str = "auto"
+    storage_force_path_style: bool = False
 
     ai_provider_api_key: str = ""
     ai_provider_base_url: str = "https://griphubrouter.web.id/v1"
