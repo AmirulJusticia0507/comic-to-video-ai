@@ -1,7 +1,6 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { api } from '../api/client'
 import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
@@ -15,11 +14,7 @@ async function submit() {
   error.value = ''
   loading.value = true
   try {
-    const data = await api('/auth/login', {
-      method: 'POST',
-      body: { email: email.value, password: password.value },
-    })
-    auth.setAuth(data.access_token, { email: email.value })
+    await auth.login(email.value, password.value)
     router.push('/upload')
   } catch (e) {
     error.value = e.message
