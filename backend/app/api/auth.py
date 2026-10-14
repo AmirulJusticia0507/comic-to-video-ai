@@ -14,6 +14,17 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 
+def get_user_by_token(token: str, db: Session) -> User | None:
+    user_id = decode_access_token(token)
+    if not user_id:
+        return None
+    try:
+        parsed_id = uuid.UUID(user_id)
+    except ValueError:
+        return None
+    return db.query(User).filter(User.id == parsed_id).first()
+
+
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register(payload: UserCreate, db: Session = Depends(get_db)):
     existing = db.query(User).filter(User.email == payload.email).first()
@@ -35,10 +46,7 @@ def login(payload: UserLogin, db: Session = Depends(get_db)):
 
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
-    user_id = decode_access_token(token)
-    if not user_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid or expired token")
-    user = db.query(User).filter(User.id == uuid.UUID(user_id)).first()
+    user = get_user_by_token(token, db)
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="user not found")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid or expired token")
     return user
