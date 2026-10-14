@@ -8,7 +8,7 @@ Comic-to-Video AI Generator — web app untuk mengonversi gambar komik/manga men
 - Backend: FastAPI (Python 3.11+), Celery + Redis (broker), WebSockets
 - Database: NeonDB (Serverless PostgreSQL), ORM SQLAlchemy, migrasi Alembic
 - Storage: Cloudflare R2 / AWS S3 (presigned URL upload)
-- AI Processing: Fal.ai / Replicate API
+- AI Processing: OpenAI-compatible client via griphubrouter (https://griphubrouter.web.id/v1) — chat, image generation, and image-to-video (/videos)
 
 ## Target Repo Structure
 ```
@@ -56,7 +56,7 @@ comic-to-video-ai/
 6. [-] Projects & Panels API CRUD
 7. [DONE] Render endpoint `/api/v1/generations/render` + credits check/deduction (api/generations.py, services/credits.py, core/celery_app.py)
 8. [DONE] Celery worker + render task (status updates, retry, stale-job reaper, beat schedule) — workers/render.py
-9. [IN PROGRESS] AI service: OpenAI-compatible client against griphubrouter (https://griphubrouter.web.id/v1) — chat_completion + generate_image. generate_video_from_image is a stub (NotImplementedError); image-to-video not yet wired. Config via AI_PROVIDER_BASE_URL / AI_PROVIDER_MODEL.
+9. [DONE] AI service: OpenAI-compatible client against griphubrouter (https://griphubrouter.web.id/v1) — chat_completion + generate_image + image-to-video (generate_video via POST /videos + poll /videos/{id}). Config: AI_PROVIDER_BASE_URL / AI_PROVIDER_MODEL / AI_VIDEO_MODEL
 10. [DONE] WebSocket `/ws/jobs/{job_id}` + Redis pubsub bridge untuk progress (api/ws.py, services/job_events.py, schemas/job.py). Auth via query param `?token=` atau header `Authorization: Bearer`. Close codes: 4401 unauthorized, 4400 bad uuid, 4404 job not found / bukan milik user. Payload event: `{type:"job.update", job_id, status, progress, video_url, error_message, updated_at}`. Kirim snapshot saat connect, lalu stream pubsub channel `render_job:{job_id}`; fallback poll DB tiap 2 detik bila Redis pubsub tidak tersedia. Tutup otomatis saat status COMPLETED/FAILED. Client bisa kirim teks `ping` untuk dapat `{"type":"pong"}`
 11. [-] Frontend scaffold (Vite Vue3, Pinia, Router, Tailwind)
 12. [-] Frontend views/components: Upload, Progress bar, Video Player
