@@ -48,16 +48,16 @@ comic-to-video-ai/
 - Verifikasi dulu (lint/typecheck/test) sebelum commit bila relevan
 
 ## Task List (roadmap)
-1. Backend scaffold (struktur app/, requirements.txt, .env.example, main.py)
-2. Core: config, JWT security, DB session, Redis client
-3. DB models SQLAlchemy + Alembic migration + index/unique constraint
-4. Auth API: register/login + password hashing
-5. Storage service: presigned URL upload S3/R2 + validasi file
-6. Projects & Panels API CRUD
-7. Render endpoint `/api/v1/generations/render` + credits check/deduction
-8. Celery worker + render task (status updates, retry, stale-job reaper)
-9. AI service integrasi Fal.ai/Replicate (image-to-video)
-10. WebSocket `/ws/jobs/{job_id}` + Redis pubsub bridge untuk progress
-11. Frontend scaffold (Vite Vue3, Pinia, Router, Tailwind)
-12. Frontend views/components: Upload, Progress bar, Video Player
-13. Perbaiki dokumentasi (enum casing, pilihan Celery/ARQ, index, webhook)
+1. [DONE] Backend scaffold (struktur app/, requirements.txt, .env.example, main.py)
+2. [DONE] Core: config, JWT security, DB session, Redis client (get_settings factory pattern)
+3. [DONE] DB models SQLAlchemy + Alembic migration + index/unique constraint (User, Project, ComicPanel, RenderJob)
+4. [DONE] Auth API: register/login + JWT token (email-validator dep)
+5. [DONE] Storage service: presigned URL upload S3/R2 + validasi file
+6. [-] Projects & Panels API CRUD
+7. [NEXT] Render endpoint `/api/v1/generations/render` + credits check/deduction
+8. [-] Celery worker + render task (status updates, retry, stale-job reaper)
+9. [IN PROGRESS] AI service: OpenAI-compatible client against griphubrouter (https://griphubrouter.web.id/v1) — chat completions + image generation (gpt-image). Config via AI_PROVIDER_BASE_URL / AI_PROVIDER_MODEL. (Replaces Fal.ai/Replicate plan.)
+10. [-] WebSocket `/ws/jobs/{job_id}` + Redis pubsub bridge untuk progress
+11. [-] Frontend scaffold (Vite Vue3, Pinia, Router, Tailwind)
+12. [-] Frontend views/components: Upload, Progress bar, Video Player
+13. [-] Perbaiki dokumentasi (enum casing, pilihan Celery/ARQ, index, webhook)
