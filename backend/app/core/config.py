@@ -21,7 +21,19 @@ class Settings(BaseSettings):
     ai_provider_api_key: str = ""
     ai_provider_base_url: str = "https://griphubrouter.web.id/v1"
     ai_provider_model: str = ""
-    ai_video_model: str = ""
+    ai_image_model: str = ""
+
+    video_provider: str = "higgsfield"
+    video_api_base_url: str = "https://api.higgsfield.ai"
+    video_api_key_id: str = ""
+    video_api_key_secret: str = ""
+    video_model: str = "alibaba/wan-3.0-prime/image-to-video"
+    video_duration_seconds: int = 5
+    video_resolution: str = "720p"
+    video_aspect_ratio: str = "adaptive"
+    video_generate_audio: bool = False
+    video_poll_interval_seconds: int = 5
+    video_timeout_seconds: int = 900
 
 
 @lru_cache

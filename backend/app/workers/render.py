@@ -7,8 +7,8 @@ from sqlalchemy.orm import Session
 from app.core.celery_app import celery_app
 from app.core.database import SessionLocal
 from app.models import ComicPanel, RenderJob
-from app.services.ai import generate_video_from_image
 from app.services.job_events import JOB_TERMINAL_STATUSES, publish_job_event
+from app.services.video import generate_video_from_image
 from app.services.storage import upload_bytes
 
 JOB_STALE_THRESHOLD_MINUTES = 30
