@@ -8,6 +8,7 @@ celery_app = Celery(
     "comic_to_video",
     broker=settings.redis_url,
     backend=settings.redis_url,
+    include=["app.workers.render"],
 )
 
 celery_app.conf.update(

@@ -45,3 +45,13 @@ def generate_presigned_download_url(key: str) -> str:
         Params={"Bucket": settings.storage_bucket_name, "Key": key},
         ExpiresIn=PRESIGNED_URL_EXPIRES_IN,
     )
+
+
+def upload_bytes(key: str, data: bytes, content_type: str) -> str:
+    _s3_client.put_object(
+        Bucket=settings.storage_bucket_name,
+        Key=key,
+        Body=data,
+        ContentType=content_type,
+    )
+    return key
