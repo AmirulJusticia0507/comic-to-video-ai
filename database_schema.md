@@ -1,6 +1,6 @@
 # Database Schema (NeonDB / PostgreSQL)
 
-Sistem menggunakan database PostgreSQL di NeonDB dengan ORM **SQLAlchemy** (atau SQLModel).
+Sistem menggunakan database PostgreSQL di NeonDB dengan ORM **SQLAlchemy** dan migrasi **Alembic**.
 
 ## Entity Relationship Diagram (ERD) Text Representation
 
@@ -82,6 +82,8 @@ Mencatat antrean dan status pengerjaan video animasi oleh AI Worker.
 | `ix_comic_panels_project_id` | `comic_panels` | `project_id` | Index (FK) |
 | `uq_comic_panels_project_order` | `comic_panels` | `(project_id, panel_order)` | Unique constraint |
 | `ix_render_jobs_panel_id` | `render_jobs` | `panel_id` | Index (FK) |
+
+PostgreSQL tidak otomatis membuat indeks untuk kolom foreign key. Ketiga indeks FK di atas dibuat eksplisit agar lookup relasi, pemeriksaan kepemilikan, dan operasi cascade tidak melakukan sequential scan pada tabel anak. Constraint gabungan pada panel juga mencegah dua panel dalam proyek yang sama memiliki `panel_order` identik.
 
 ---
 

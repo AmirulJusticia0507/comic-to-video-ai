@@ -9,10 +9,10 @@ Aplikasi ini dirancang dengan arsitektur **Asynchronous Job Queue** untuk menang
 ## 🏗️ Tech Stack
 
 * **Frontend:** Vue.js 3 (Composition API), Pinia (State Management), TailwindCSS, Vue Router.
-* **Backend:** FastAPI (Python 3.11+), Celery / ARQ (Task Worker), WebSockets / SSE.
+* **Backend:** FastAPI (Python 3.11+), Celery + Redis (Task Worker), WebSockets.
 * **Database:** NeonDB (Serverless PostgreSQL).
 * **Storage:** Cloudflare R2 / AWS S3 (penyimpan file gambar & video).
-* **AI Processing:** Fal.ai / Replicate API / ComfyUI Serverless (Image-to-Video Inference).
+* **AI Processing:** griphubrouter (OpenAI-compatible: chat + image generation) / Higgsfield Seedance (Image-to-Video).
 
 ---
 
@@ -92,8 +92,18 @@ STORAGE_ACCESS_KEY=your_access_key
 STORAGE_SECRET_KEY=your_secret_key
 STORAGE_BUCKET_NAME=comic-videos
 
-# AI Services
-AI_PROVIDER_API_KEY=your_fal_ai_or_replicate_key
+# AI Services (chat + image via griphubrouter)
+AI_PROVIDER_API_KEY=your_griphubrouter_key
+AI_PROVIDER_BASE_URL=https://griphubrouter.web.id/v1
+AI_PROVIDER_MODEL=gemini-3.8-flash
+AI_IMAGE_MODEL=gpt-image
+
+# AI Video (Higgsfield image-to-video)
+VIDEO_PROVIDER=higgsfield
+VIDEO_API_BASE_URL=https://api.higgsfield.ai
+VIDEO_API_KEY_ID=
+VIDEO_API_KEY_SECRET=your_higgsfield_key_secret
+VIDEO_MODEL=alibaba/wan-3.0-prime/image-to-video
 ```
 
 ### Frontend (`frontend/.env`)
@@ -108,9 +118,8 @@ VITE_WS_BASE_URL=ws://localhost:8000/ws
 
 ```text
 comic-to-video-ai/
-├── docs/                      # Dokumentasi Arsitektur & DB
-│   ├── ARCHITECTURE.md
-│   └── DATABASE.md
+├── architecture_documentation.md  # Arsitektur, antrean, WebSocket, dan polling provider
+├── database_schema.md             # Skema, enum, indeks, dan constraint database
 ├── backend/                   # FastAPI Backend
 │   ├── app/
 │   │   ├── api/               # Endpoint Routers (REST & WS)
@@ -133,6 +142,8 @@ comic-to-video-ai/
 │   └── package.json
 └── README.md
 ```
+
+Status proyek memakai nilai lowercase `draft`, `processing`, dan `completed`. Status render job memakai nilai uppercase `PENDING`, `PROCESSING`, `COMPLETED`, dan `FAILED`. Detail alur Celery serta keputusan polling tanpa webhook dijelaskan di `architecture_documentation.md`.
 
 ---
 

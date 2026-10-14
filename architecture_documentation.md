@@ -33,7 +33,7 @@ Dokumen ini menjelaskan alur kerja data dan arsitektur sistem pengolahan animasi
                                              └──────────────┘
 ```
 
-> Pilihan worker: **Celery + Redis** (bukan ARQ). AI image-to-video: **Higgsfield** via submit lalu poll `status_url` (bukan webhook, agar worker tidak butuh public URL).
+> Pilihan worker final untuk implementasi saat ini adalah **Celery + Redis**, bukan ARQ. AI image-to-video memakai **Higgsfield** melalui submit lalu polling `status_url`.
 
 ---
 
@@ -67,10 +67,16 @@ Dokumen ini menjelaskan alur kerja data dan arsitektur sistem pengolahan animasi
    * Progress bar dan status diperbarui di tampilan Vue secara interaktif.
    * Ketika selesai, video player memuat hasil animasi secara otomatis.
 
+## 3. Keputusan Integrasi Status Video
+
+Backend mengambil status render Higgsfield dengan polling ke `status_url`; aplikasi tidak menyediakan endpoint webhook dari provider video. Pilihan ini menjaga worker dapat berjalan tanpa URL callback publik dan membuat seluruh transisi status tetap dikendalikan oleh task Celery.
+
+WebSocket bukan webhook provider. WebSocket hanya menyalurkan perubahan internal dari Redis pubsub ke frontend melalui `/ws/jobs/{job_id}`. Jika pubsub Redis tidak tersedia, server membaca status dari database setiap 2 detik.
+
 ---
 
-## 3. Strategi Penghematan Biaya & Scale
+## 4. Strategi Penghematan Biaya & Scale
 
 * **Storage (Cloudflare R2):** Digunakan karena tidak membebankan biaya *egress* (download bandwidth) saat streaming video ke user.
 * **Serverless Database (NeonDB):** Memungkinkan autoscaling dan zero-cost saat idel jika traffic belum tinggi.
-* **Decoupled AI Engine:** Menggunakan pihak ketiga (Fal.ai/Replicate) di fase MVP agar tidak perlu membayar sewa GPU dedicated saat server tidak digunakan.
+* **Decoupled AI Engine:** Menggunakan griphubrouter untuk chat/image generation dan Higgsfield untuk image-to-video sehingga aplikasi tidak perlu mengelola GPU dedicated.
