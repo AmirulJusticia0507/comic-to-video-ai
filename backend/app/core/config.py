@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     storage_bucket_name: str = "comic-videos"
 
     ai_provider_api_key: str = ""
+    ai_provider_base_url: str = "https://griphubrouter.web.id/v1"
+    ai_provider_model: str = ""
 
 
 @lru_cache
