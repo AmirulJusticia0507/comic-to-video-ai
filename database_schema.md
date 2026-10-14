@@ -46,7 +46,7 @@ Menyimpan panel-panel gambar dari komik yang diunggah.
 | `id` | UUID | Primary Key | ID Unik Panel |
 | `project_id` | UUID | Foreign Key (`projects.id`) | Proyek terkait |
 | `image_url` | TEXT | Not Null | URL Gambar di S3/R2 |
-| `panel_order` | INTEGER | Not Null | Urutan urutan panel dalam komik |
+| `panel_order` | INTEGER | Not Null | Urutan panel dalam komik |
 | `motion_prompt` | TEXT | Nullable | Deskripsi gerakan animasi untuk AI |
 | `created_at` | TIMESTAMPTZ | Default: `NOW()` | Waktu dibuat |
 
@@ -65,3 +65,27 @@ Mencatat antrean dan status pengerjaan video animasi oleh AI Worker.
 | `error_message` | TEXT | Nullable | Pesan error jika gagal |
 | `created_at` | TIMESTAMPTZ | Default: `NOW()` | Waktu job masuk |
 | `updated_at` | TIMESTAMPTZ | Default: `NOW()` | Waktu perubahan terakhir |
+
+---
+
+## Konvensi Enum (case-sensitive)
+- `projects.status`: lowercase — `draft`, `processing`, `completed`
+- `render_jobs.status`: UPPERCASE — `PENDING`, `PROCESSING`, `COMPLETED`, `FAILED`
+
+---
+
+## Indeks & Constraint
+| Nama | Tabel | Kolom | Jenis |
+| :--- | :--- | :--- | :--- |
+| `uq_users_email` | `users` | `email` | Unique constraint |
+| `ix_projects_user_id` | `projects` | `user_id` | Index (FK) |
+| `ix_comic_panels_project_id` | `comic_panels` | `project_id` | Index (FK) |
+| `uq_comic_panels_project_order` | `comic_panels` | `(project_id, panel_order)` | Unique constraint |
+| `ix_render_jobs_panel_id` | `render_jobs` | `panel_id` | Index (FK) |
+
+---
+
+## Catatan Implementasi
+- Semua PK memakai `gen_random_uuid()` sebagai server default (built-in PostgreSQL 13+, tanpa ekstensi tambahan; didukung NeonDB).
+- `users.credits` = kuota generasi; 1 kredit dipotong per panel saat `POST /api/v1/generations/render` (HTTP 402 bila kurang).
+- `render_jobs.updated_at` diperbarui otomatis setiap ada perubahan status/progres.
