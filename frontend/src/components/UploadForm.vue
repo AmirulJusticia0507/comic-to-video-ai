@@ -21,7 +21,6 @@ const error = ref('')
 const dragOver = ref(false)
 const archive = ref(null)
 const archiveInput = ref(null)
-const archiveMotionPrompt = ref('')
 const importing = ref(false)
 const success = ref('')
 const archivePreviews = ref([])
@@ -187,11 +186,11 @@ async function importArchive() {
     const form = new FormData()
     form.append('project_id', props.projectId)
     form.append('archive', archive.value)
-    if (archiveMotionPrompt.value) form.append('motion_prompt', archiveMotionPrompt.value)
+    if (motionPrompt.value) form.append('motion_prompt', motionPrompt.value)
     const panels = await api('/panels/import-archive', { method: 'POST', body: form })
     success.value = `Imported ${panels.length} panel(s)`
     archive.value = null
-    archiveMotionPrompt.value = ''
+    motionPrompt.value = ''
     clearArchivePreviews()
     if (archiveInput.value) archiveInput.value.value = ''
     emit('uploaded', panels)
@@ -235,12 +234,15 @@ async function importArchive() {
       <p class="mt-1 text-xs text-gray-400">PNG, JPEG, or WebP — maks 20 MB per gambar, 100 file sekaligus</p>
     </div>
 
+    <label class="mt-3 block text-sm font-semibold text-white" for="motion-prompt">Motion prompt</label>
     <input
+      id="motion-prompt"
       v-model="motionPrompt"
       type="text"
-      placeholder="Motion prompt khusus file di atas (optional)"
-      class="field mt-3"
+      placeholder="Sekali isi saja, berlaku untuk semua gambar (optional)"
+      class="field mt-1"
     />
+    <p class="mt-1 text-xs text-slate-500">Satu prompt dipakai untuk semua gambar, baik upload file maupun import arsip.</p>
 
     <p v-if="error" class="mt-2 text-sm text-red-500">{{ error }}</p>
 
@@ -257,12 +259,6 @@ async function importArchive() {
     <label class="block text-sm font-semibold text-white">Import banyak panel</label>
     <p class="mt-1 text-xs leading-5 text-slate-500">ZIP atau RAR, maks 200 MB. Maks 100 gambar, 20 MB per gambar, total 500 MB. Panel diurutkan berdasarkan nama file.</p>
     <input ref="archiveInput" type="file" accept=".zip,.rar,application/zip,application/vnd.rar" class="mt-3 block w-full text-sm text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-2 file:text-slate-200" @change="onArchiveChange" />
-    <input
-      v-model="archiveMotionPrompt"
-      type="text"
-      placeholder="Motion prompt untuk semua gambar di arsip (optional)"
-      class="field mt-3"
-    />
     <p v-if="previewLoading" class="mt-2 text-xs text-slate-400">Membaca isi arsip...</p>
     <div v-if="archivePreviews.length" class="mt-3">
       <p class="text-xs font-medium text-slate-300">Preview isi ZIP ({{ archivePreviews.length }} gambar):</p>
