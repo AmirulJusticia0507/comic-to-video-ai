@@ -13,9 +13,10 @@ const emit = defineEmits(['uploaded'])
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp']
 const MAX_SIZE_BYTES = 20 * 1024 * 1024
 
-const file = ref(null)
+const files = ref([])
 const motionPrompt = ref('')
 const uploading = ref(false)
+const uploadProgress = ref('')
 const error = ref('')
 const dragOver = ref(false)
 const archive = ref(null)
@@ -69,62 +70,89 @@ async function buildZipPreviews(file) {
 
 function onFileChange(event) {
   error.value = ''
-  const selected = event.target.files?.[0]
-  if (selected) validateAndSet(selected)
+  const selected = Array.from(event.target.files || [])
+  if (selected.length) addFiles(selected)
+  event.target.value = ''
 }
 
 function onDrop(event) {
   dragOver.value = false
   error.value = ''
-  const selected = event.dataTransfer?.files?.[0]
-  if (selected) validateAndSet(selected)
+  const selected = Array.from(event.dataTransfer?.files || [])
+  if (selected.length) addFiles(selected)
 }
 
-function validateAndSet(selected) {
-  if (!ALLOWED_TYPES.includes(selected.type)) {
-    error.value = 'only PNG, JPEG, or WebP images are allowed'
-    return
+function addFiles(selected) {
+  const skipped = []
+  for (const item of selected) {
+    if (!ALLOWED_TYPES.includes(item.type)) {
+      skipped.push(`${item.name}: tipe tidak didukung`)
+      continue
+    }
+    if (item.size > MAX_SIZE_BYTES) {
+      skipped.push(`${item.name}: lebih dari 20 MB`)
+      continue
+    }
+    if (files.value.length >= 100) {
+      skipped.push(`${item.name}: maks 100 file sekaligus`)
+      break
+    }
+    files.value.push(item)
   }
-  if (selected.size > MAX_SIZE_BYTES) {
-    error.value = 'image must be smaller than 20 MB'
-    return
-  }
-  file.value = selected
+  if (skipped.length) error.value = skipped.join('; ')
+}
+
+function removeFile(index) {
+  files.value.splice(index, 1)
+}
+
+async function uploadSingle(item, order) {
+  const presigned = await api('/uploads/presigned-url', {
+    method: 'POST',
+    body: { filename: item.name, content_type: item.type },
+  })
+
+  const uploadRes = await fetch(presigned.upload_url, {
+    method: 'PUT',
+    headers: { 'Content-Type': item.type },
+    body: item,
+  })
+  if (!uploadRes.ok) throw new Error(`storage upload failed (${uploadRes.status})`)
+
+  return api('/panels', {
+    method: 'POST',
+    body: {
+      project_id: props.projectId,
+      image_url: presigned.key,
+      panel_order: order,
+      motion_prompt: motionPrompt.value || null,
+    },
+  })
 }
 
 async function submit() {
-  if (!file.value || uploading.value) return
+  if (!files.value.length || uploading.value) return
   uploading.value = true
   error.value = ''
   try {
-    const presigned = await api('/uploads/presigned-url', {
-      method: 'POST',
-      body: { filename: file.value.name, content_type: file.value.type },
-    })
-
-    const uploadRes = await fetch(presigned.upload_url, {
-      method: 'PUT',
-      headers: { 'Content-Type': file.value.type },
-      body: file.value,
-    })
-    if (!uploadRes.ok) throw new Error(`storage upload failed (${uploadRes.status})`)
-
-    const panel = await api('/panels', {
-      method: 'POST',
-      body: {
-        project_id: props.projectId,
-        image_url: presigned.key,
-        panel_order: props.nextOrder,
-        motion_prompt: motionPrompt.value || null,
-      },
-    })
-    emit('uploaded', panel)
-    file.value = null
+    let order = props.nextOrder
+    const total = files.value.length
+    for (let i = 0; i < total; i++) {
+      uploadProgress.value = total > 1 ? `Uploading ${i + 1}/${total}...` : 'Uploading...'
+      await uploadSingle(files.value[i], order)
+      order += 1
+    }
+    const done = total
+    files.value = []
     motionPrompt.value = ''
+    uploadProgress.value = ''
+    success.value = total > 1 ? `Uploaded ${done} panel(s)` : success.value
+    emit('uploaded', { count: done })
   } catch (err) {
     error.value = err.message
   } finally {
     uploading.value = false
+    uploadProgress.value = ''
   }
 }
 
@@ -191,14 +219,20 @@ async function importArchive() {
         ref="fileInput"
         type="file"
         accept="image/png,image/jpeg,image/webp"
+        multiple
         class="hidden"
         @change="onFileChange"
       />
-      <p v-if="!file" class="text-sm text-gray-500">
-        Drag &amp; drop a comic panel here, or click to browse
+      <p v-if="!files.length" class="text-sm text-gray-500">
+        Drag &amp; drop gambar komik di sini, atau klik untuk pilih (bisa banyak sekaligus)
       </p>
-      <p v-else class="text-sm font-medium text-gray-900">{{ file.name }}</p>
-      <p class="mt-1 text-xs text-gray-400">PNG, JPEG, or WebP — max 20 MB</p>
+      <div v-else class="w-full space-y-1">
+        <p v-for="(item, index) in files" :key="`${item.name}-${item.size}`" class="flex items-center justify-between gap-2 text-sm font-medium text-gray-900">
+          <span class="truncate">{{ item.name }}</span>
+          <button type="button" class="shrink-0 text-xs text-red-500 hover:underline" @click.stop="removeFile(index)">hapus</button>
+        </p>
+      </div>
+      <p class="mt-1 text-xs text-gray-400">PNG, JPEG, or WebP — maks 20 MB per gambar, 100 file sekaligus</p>
     </div>
 
     <input
@@ -212,10 +246,10 @@ async function importArchive() {
 
     <button
       class="btn-primary mt-3 w-full"
-      :disabled="!file || uploading"
+      :disabled="!files.length || uploading"
       @click="submit"
     >
-      {{ uploading ? 'Uploading...' : 'Upload Panel' }}
+      {{ uploading ? uploadProgress || 'Uploading...' : files.length > 1 ? `Upload ${files.length} Panels` : 'Upload Panel' }}
     </button>
 
     <div class="my-5 flex items-center gap-3 text-xs uppercase tracking-widest text-slate-600"><span class="h-px flex-1 bg-white/10"></span>atau<span class="h-px flex-1 bg-white/10"></span></div>
