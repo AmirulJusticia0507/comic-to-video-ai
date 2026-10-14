@@ -20,6 +20,7 @@ const error = ref('')
 const dragOver = ref(false)
 const archive = ref(null)
 const archiveInput = ref(null)
+const archiveMotionPrompt = ref('')
 const importing = ref(false)
 const success = ref('')
 const archivePreviews = ref([])
@@ -158,9 +159,11 @@ async function importArchive() {
     const form = new FormData()
     form.append('project_id', props.projectId)
     form.append('archive', archive.value)
+    if (archiveMotionPrompt.value) form.append('motion_prompt', archiveMotionPrompt.value)
     const panels = await api('/panels/import-archive', { method: 'POST', body: form })
     success.value = `Imported ${panels.length} panel(s)`
     archive.value = null
+    archiveMotionPrompt.value = ''
     clearArchivePreviews()
     if (archiveInput.value) archiveInput.value.value = ''
     emit('uploaded', panels)
@@ -201,7 +204,7 @@ async function importArchive() {
     <input
       v-model="motionPrompt"
       type="text"
-      placeholder="Motion prompt (optional), e.g. camera slowly zooms in"
+      placeholder="Motion prompt khusus file di atas (optional)"
       class="field mt-3"
     />
 
@@ -220,6 +223,12 @@ async function importArchive() {
     <label class="block text-sm font-semibold text-white">Import banyak panel</label>
     <p class="mt-1 text-xs leading-5 text-slate-500">ZIP atau RAR, maks 200 MB. Maks 100 gambar, 20 MB per gambar, total 500 MB. Panel diurutkan berdasarkan nama file.</p>
     <input ref="archiveInput" type="file" accept=".zip,.rar,application/zip,application/vnd.rar" class="mt-3 block w-full text-sm text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-2 file:text-slate-200" @change="onArchiveChange" />
+    <input
+      v-model="archiveMotionPrompt"
+      type="text"
+      placeholder="Motion prompt untuk semua gambar di arsip (optional)"
+      class="field mt-3"
+    />
     <p v-if="previewLoading" class="mt-2 text-xs text-slate-400">Membaca isi arsip...</p>
     <div v-if="archivePreviews.length" class="mt-3">
       <p class="text-xs font-medium text-slate-300">Preview isi ZIP ({{ archivePreviews.length }} gambar):</p>

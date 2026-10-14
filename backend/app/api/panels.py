@@ -68,6 +68,7 @@ def create_panel(
 async def import_archive(
     project_id: uuid.UUID = Form(...),
     archive: UploadFile = File(...),
+    motion_prompt: Optional[str] = Form(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> list[ComicPanelResponse]:
@@ -97,7 +98,12 @@ async def import_archive(
                 image_suffix = Path(name).suffix.lower()
                 key = f"panels/{project_id}/{uuid.uuid4()}{image_suffix}"
                 upload_bytes(key, data, content_type)
-                panel = ComicPanel(project_id=project_id, image_url=key, panel_order=next_order + offset)
+                panel = ComicPanel(
+                    project_id=project_id,
+                    image_url=key,
+                    panel_order=next_order + offset,
+                    motion_prompt=motion_prompt or None,
+                )
                 db.add(panel)
                 panels.append(panel)
             db.commit()
