@@ -12,6 +12,7 @@ const projectId = route.params.id
 
 const project = ref(null)
 const panels = ref([])
+const imageUrls = ref({})
 const latestJobByPanel = ref(new Map())
 const loading = ref(true)
 const error = ref('')
@@ -48,6 +49,7 @@ async function load() {
     ])
     project.value = proj
     panels.value = panelList
+    resolveImageUrls(panelList)
     const latest = new Map()
     for (const job of jobList) {
       if (!latest.has(job.panel_id)) latest.set(job.panel_id, job)
@@ -62,6 +64,28 @@ async function load() {
 
 function onUploaded() {
   load()
+}
+
+function imageSrc(panel) {
+  return imageUrls.value[panel.id] || panel.image_url
+}
+
+async function resolveImageUrls(list) {
+  const entries = await Promise.all(
+    list.map(async (panel) => {
+      const key = panel.image_url || ''
+      if (/^https?:\/\//i.test(key) || /^blob:/i.test(key) || /^data:/i.test(key)) {
+        return [panel.id, key]
+      }
+      try {
+        const data = await api(`/uploads/download-url?key=${encodeURIComponent(key)}`)
+        return [panel.id, data.url]
+      } catch {
+        return [panel.id, key]
+      }
+    }),
+  )
+  imageUrls.value = Object.fromEntries(entries)
 }
 
 async function renderSelected() {
@@ -149,8 +173,9 @@ onMounted(load)
                   @change="toggle(panel.id)"
                 />
                 <img
-                  :src="panel.image_url"
+                  :src="imageSrc(panel)"
                   :alt="`Panel ${panel.panel_order}`"
+                  loading="lazy"
                   class="h-24 w-auto rounded border border-gray-200 object-contain"
                 />
                 <div class="min-w-0 flex-1">
@@ -161,7 +186,7 @@ onMounted(load)
                   <div v-if="latestJobByPanel.has(panel.id)" class="mt-3">
                     <JobTracker
                       :job-id="latestJobByPanel.get(panel.id).id"
-                      :panel-image-url="panel.image_url"
+                      :panel-image-url="imageSrc(panel)"
                     />
                   </div>
                 </div>

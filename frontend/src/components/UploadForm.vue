@@ -1,5 +1,6 @@
 <script setup>
-import { ref } from 'vue'
+import { onBeforeUnmount, ref } from 'vue'
+import JSZip from 'jszip'
 import { api } from '../api/client'
 
 const props = defineProps({
@@ -21,6 +22,49 @@ const archive = ref(null)
 const archiveInput = ref(null)
 const importing = ref(false)
 const success = ref('')
+const archivePreviews = ref([])
+const previewLoading = ref(false)
+
+const PREVIEW_IMAGE_EXTS = ['.png', '.jpg', '.jpeg', '.webp']
+
+function clearArchivePreviews() {
+  for (const item of archivePreviews.value) URL.revokeObjectURL(item.url)
+  archivePreviews.value = []
+}
+
+onBeforeUnmount(clearArchivePreviews)
+
+function naturalCompare(a, b) {
+  return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
+}
+
+async function buildZipPreviews(file) {
+  previewLoading.value = true
+  try {
+    const zip = await JSZip.loadAsync(file)
+    const names = Object.keys(zip.files).filter((name) => {
+      const lower = name.toLowerCase()
+      const base = lower.split('/').pop()
+      if (!base || base.startsWith('.') || lower.startsWith('__macosx/')) return false
+      const entry = zip.files[name]
+      if (entry.dir) return false
+      return PREVIEW_IMAGE_EXTS.some((ext) => lower.endsWith(ext))
+    })
+    names.sort(naturalCompare)
+    const limited = names.slice(0, 100)
+    const items = []
+    for (const name of limited) {
+      const blob = await zip.files[name].async('blob')
+      if (blob.size > MAX_SIZE_BYTES) continue
+      items.push({ name: name.split('/').pop(), url: URL.createObjectURL(blob) })
+    }
+    archivePreviews.value = items
+  } catch {
+    archivePreviews.value = []
+  } finally {
+    previewLoading.value = false
+  }
+}
 
 function onFileChange(event) {
   error.value = ''
@@ -86,6 +130,7 @@ async function submit() {
 function onArchiveChange(event) {
   error.value = ''
   success.value = ''
+  clearArchivePreviews()
   const selected = event.target.files?.[0] || null
   if (selected) {
     const name = selected.name.toLowerCase()
@@ -99,6 +144,7 @@ function onArchiveChange(event) {
       archive.value = null
       return
     }
+    if (name.endsWith('.zip')) buildZipPreviews(selected)
   }
   archive.value = selected
 }
@@ -115,6 +161,7 @@ async function importArchive() {
     const panels = await api('/panels/import-archive', { method: 'POST', body: form })
     success.value = `Imported ${panels.length} panel(s)`
     archive.value = null
+    clearArchivePreviews()
     if (archiveInput.value) archiveInput.value.value = ''
     emit('uploaded', panels)
   } catch (err) {
@@ -173,6 +220,17 @@ async function importArchive() {
     <label class="block text-sm font-semibold text-white">Import banyak panel</label>
     <p class="mt-1 text-xs leading-5 text-slate-500">ZIP atau RAR, maks 200 MB. Maks 100 gambar, 20 MB per gambar, total 500 MB. Panel diurutkan berdasarkan nama file.</p>
     <input ref="archiveInput" type="file" accept=".zip,.rar,application/zip,application/vnd.rar" class="mt-3 block w-full text-sm text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-2 file:text-slate-200" @change="onArchiveChange" />
+    <p v-if="previewLoading" class="mt-2 text-xs text-slate-400">Membaca isi arsip...</p>
+    <div v-if="archivePreviews.length" class="mt-3">
+      <p class="text-xs font-medium text-slate-300">Preview isi ZIP ({{ archivePreviews.length }} gambar):</p>
+      <div class="mt-2 grid max-h-64 grid-cols-4 gap-2 overflow-y-auto rounded-lg border border-white/10 bg-black/20 p-2">
+        <figure v-for="item in archivePreviews" :key="item.url" class="overflow-hidden rounded-md bg-white/5">
+          <img :src="item.url" :alt="item.name" loading="lazy" class="h-16 w-full object-cover" />
+          <figcaption class="truncate px-1 py-0.5 text-[10px] text-slate-400" :title="item.name">{{ item.name }}</figcaption>
+        </figure>
+      </div>
+    </div>
+    <p v-else-if="archive && archive.name.toLowerCase().endsWith('.rar')" class="mt-2 text-xs text-slate-500">Preview tidak tersedia untuk RAR — gambar akan tampil setelah import.</p>
     <p v-if="success" class="mt-2 text-sm text-green-500">{{ success }}</p>
     <button class="btn-secondary mt-3 w-full" :disabled="!archive || importing" @click="importArchive">{{ importing ? 'Importing...' : 'Import archive' }}</button>
   </div>
