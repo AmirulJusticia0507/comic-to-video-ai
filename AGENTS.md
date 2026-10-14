@@ -54,9 +54,9 @@ comic-to-video-ai/
 4. [DONE] Auth API: register/login + JWT token (email-validator dep)
 5. [DONE] Storage service: presigned URL upload S3/R2 + validasi file
 6. [-] Projects & Panels API CRUD
-7. [NEXT] Render endpoint `/api/v1/generations/render` + credits check/deduction
-8. [-] Celery worker + render task (status updates, retry, stale-job reaper)
-9. [IN PROGRESS] AI service: OpenAI-compatible client against griphubrouter (https://griphubrouter.web.id/v1) — chat completions + image generation (gpt-image). Config via AI_PROVIDER_BASE_URL / AI_PROVIDER_MODEL. (Replaces Fal.ai/Replicate plan.)
+7. [DONE] Render endpoint `/api/v1/generations/render` + credits check/deduction (api/generations.py, services/credits.py, core/celery_app.py)
+8. [DONE] Celery worker + render task (status updates, retry, stale-job reaper, beat schedule) — workers/render.py
+9. [IN PROGRESS] AI service: OpenAI-compatible client against griphubrouter (https://griphubrouter.web.id/v1) — chat_completion + generate_image. generate_video_from_image is a stub (NotImplementedError); image-to-video not yet wired. Config via AI_PROVIDER_BASE_URL / AI_PROVIDER_MODEL.
 10. [-] WebSocket `/ws/jobs/{job_id}` + Redis pubsub bridge untuk progress
 11. [-] Frontend scaffold (Vite Vue3, Pinia, Router, Tailwind)
 12. [-] Frontend views/components: Upload, Progress bar, Video Player
