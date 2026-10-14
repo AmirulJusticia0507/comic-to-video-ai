@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     ai_provider_api_key: str = ""
     ai_provider_base_url: str = "https://griphubrouter.web.id/v1"
     ai_provider_model: str = ""
+    ai_video_model: str = ""
 
 
 @lru_cache
