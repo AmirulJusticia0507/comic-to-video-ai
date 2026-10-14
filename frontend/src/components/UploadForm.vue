@@ -17,6 +17,10 @@ const motionPrompt = ref('')
 const uploading = ref(false)
 const error = ref('')
 const dragOver = ref(false)
+const archive = ref(null)
+const archiveInput = ref(null)
+const importing = ref(false)
+const success = ref('')
 
 function onFileChange(event) {
   error.value = ''
@@ -78,6 +82,47 @@ async function submit() {
     uploading.value = false
   }
 }
+
+function onArchiveChange(event) {
+  error.value = ''
+  success.value = ''
+  const selected = event.target.files?.[0] || null
+  if (selected) {
+    const name = selected.name.toLowerCase()
+    if (!name.endsWith('.zip') && !name.endsWith('.rar')) {
+      error.value = 'only ZIP and RAR archives are supported'
+      archive.value = null
+      return
+    }
+    if (selected.size > 200 * 1024 * 1024) {
+      error.value = 'archive must be smaller than 200 MB'
+      archive.value = null
+      return
+    }
+  }
+  archive.value = selected
+}
+
+async function importArchive() {
+  if (!archive.value || importing.value) return
+  importing.value = true
+  error.value = ''
+  success.value = ''
+  try {
+    const form = new FormData()
+    form.append('project_id', props.projectId)
+    form.append('archive', archive.value)
+    const panels = await api('/panels/import-archive', { method: 'POST', body: form })
+    success.value = `Imported ${panels.length} panel(s)`
+    archive.value = null
+    if (archiveInput.value) archiveInput.value.value = ''
+    emit('uploaded', panels)
+  } catch (err) {
+    error.value = err.message
+  } finally {
+    importing.value = false
+  }
+}
 </script>
 
 <template>
@@ -122,5 +167,13 @@ async function submit() {
     >
       {{ uploading ? 'Uploading...' : 'Upload Panel' }}
     </button>
+
+    <div class="my-5 flex items-center gap-3 text-xs uppercase tracking-widest text-slate-600"><span class="h-px flex-1 bg-white/10"></span>atau<span class="h-px flex-1 bg-white/10"></span></div>
+
+    <label class="block text-sm font-semibold text-white">Import banyak panel</label>
+    <p class="mt-1 text-xs leading-5 text-slate-500">ZIP atau RAR, maks 200 MB. Maks 100 gambar, 20 MB per gambar, total 500 MB. Panel diurutkan berdasarkan nama file.</p>
+    <input ref="archiveInput" type="file" accept=".zip,.rar,application/zip,application/vnd.rar" class="mt-3 block w-full text-sm text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-2 file:text-slate-200" @change="onArchiveChange" />
+    <p v-if="success" class="mt-2 text-sm text-green-500">{{ success }}</p>
+    <button class="btn-secondary mt-3 w-full" :disabled="!archive || importing" @click="importArchive">{{ importing ? 'Importing...' : 'Import archive' }}</button>
   </div>
 </template>

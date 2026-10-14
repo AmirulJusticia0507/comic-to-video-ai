@@ -147,5 +147,15 @@ Status proyek memakai nilai lowercase `draft`, `processing`, dan `completed`. St
 
 ---
 
+## Import arsip (ZIP / RAR)
+
+Endpoint `POST /api/v1/panels/import-archive` (`multipart/form-data`: `project_id` + `archive`) mengekstrak gambar dari arsip lalu membuat satu `ComicPanel` per gambar. ZIP didukung native via `zipfile`; RAR via `rarfile` + binary eksternal.
+
+Batas aman: arsip maks 200 MB, maks 100 gambar, 20 MB per gambar, total hasil ekstrak 500 MB. Arsip bersarang (nested archive), arsip terenkripsi, path traversal (`../`, absolute path), dan file yang magic bytes-nya bukan PNG/JPEG/WebP ditolak. Panel diurutkan natural berdasarkan nama file.
+
+Kebutuhan binary RAR: di Windows, `C:\Program Files\WinRAR\UnRAR.exe` terdeteksi otomatis. Di production (Linux), install `unrar` (mis. `apt-get install unrar`) sehingga tersedia di `PATH`, atau set `UNRAR_TOOL=/usr/bin/unrar`.
+
+---
+
 ## 📄 Lisensi
 [MIT License](LICENSE)

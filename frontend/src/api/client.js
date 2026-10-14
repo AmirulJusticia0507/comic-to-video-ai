@@ -4,14 +4,15 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api
 
 export async function api(path, { method = 'GET', body, headers = {} } = {}) {
   const auth = useAuthStore()
+  const isFormData = body instanceof FormData
   const res = await fetch(`${API_BASE}${path}`, {
     method,
     headers: {
-      ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+      ...(body !== undefined && !isFormData ? { 'Content-Type': 'application/json' } : {}),
       ...(auth.token ? { Authorization: `Bearer ${auth.token}` } : {}),
       ...headers,
     },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: body !== undefined ? (isFormData ? body : JSON.stringify(body)) : undefined,
   })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
