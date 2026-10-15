@@ -1,6 +1,6 @@
 # Comic-to-Video AI Generator
 
-Sistem berbasis Web untuk mengonversi gambar komik/manga menjadi video animasi pendek secara otomatis menggunakan AI generative (Image-to-Video models). 
+Sistem berbasis Web untuk mengonversi gambar komik/manga menjadi video animasi pendek secara otomatis menggunakan AI generative (Image-to-Video models).
 
 Aplikasi ini dirancang dengan arsitektur **Asynchronous Job Queue** untuk menangani pemrosesan AI yang intensif tanpa memblokir antarmuka pengguna (*non-blocking UI*).
 
@@ -19,6 +19,7 @@ Aplikasi ini dirancang dengan arsitektur **Asynchronous Job Queue** untuk menang
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 * Python 3.11+
 * Node.js 18+
 * Redis Server (untuk Celery Broker)
@@ -46,11 +47,12 @@ cp .env.example .env
 # Jalankan Database Migration
 alembic upgrade head
 
-# Jalankan Server Development FastAPI
-uvicorn app.main:app --reload --port 8000
+# Jalankan Server Development FastAPI (dari folder backend/)
+uvicorn main:app --reload --port 8000
 ```
 
 Jalankan juga Celery Worker di terminal terpisah:
+
 ```bash
 celery -A app.core.celery_app worker --loglevel=info
 ```
@@ -79,6 +81,7 @@ Aplikasi akan berjalan di `http://localhost:5173`.
 ## ⚙️ Environment Variables (.env)
 
 ### Backend (`backend/.env`)
+
 ```env
 DATABASE_URL=postgresql://user:password@ep-cool-site-123456.us-east-2.aws.neon.tech/neondb?sslmode=require
 REDIS_URL=redis://localhost:6379/0
@@ -107,6 +110,7 @@ VIDEO_MODEL=alibaba/wan-3.0-prime/image-to-video
 ```
 
 ### Frontend (`frontend/.env`)
+
 ```env
 VITE_API_BASE_URL=http://localhost:8000/api/v1
 VITE_WS_BASE_URL=ws://localhost:8000/ws
@@ -158,4 +162,5 @@ Kebutuhan binary RAR: di Windows, `C:\Program Files\WinRAR\UnRAR.exe` terdeteksi
 ---
 
 ## 📄 Lisensi
+
 [MIT License](LICENSE)
