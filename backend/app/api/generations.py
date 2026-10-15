@@ -42,12 +42,26 @@ def render(
     db.add_all(jobs)
     db.flush()
 
+    pairs = [(str(panel.id), str(job.id)) for panel, job in zip(panels, jobs)]
+    job_ids = [job.id for job in jobs]
     try:
-        for panel, job in zip(panels, jobs):
-            celery_app.send_task(RENDER_PANEL_TASK, args=[str(panel.id), str(job.id)])
+        db.commit()
     except Exception:
         db.rollback()
+        raise
+
+    enqueued: list[str] = []
+    try:
+        for panel_id, job_id in pairs:
+            celery_app.send_task(RENDER_PANEL_TASK, args=[panel_id, job_id])
+            enqueued.append(job_id)
+    except Exception:
+        failed_ids = set(job_ids) - {uuid.UUID(job_id) for job_id in enqueued}
+        if failed_ids:
+            for job in db.query(RenderJob).filter(RenderJob.id.in_(failed_ids)).all():
+                job.status = "FAILED"
+                job.error_message = "failed to enqueue render job"
+            db.commit()
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="failed to enqueue render jobs")
 
-    db.commit()
-    return RenderResponse(job_ids=[job.id for job in jobs], credits_remaining=current_user.credits)
+    return RenderResponse(job_ids=job_ids, credits_remaining=current_user.credits)
