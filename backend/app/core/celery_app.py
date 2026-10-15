@@ -24,4 +24,4 @@ celery_app.conf.update(
     enable_utc=True,
 )
 
-RENDER_PANEL_TASK = "comic_to_video.render_panel"
+RENDER_PANEL_TASK = "comic_video.render_panel"
