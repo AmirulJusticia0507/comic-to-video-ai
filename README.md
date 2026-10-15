@@ -76,6 +76,18 @@ npm run dev
 
 Aplikasi akan berjalan di `http://localhost:5173`.
 
+### 3. MinIO lokal
+
+Jalankan Docker Desktop, lalu dari root repository:
+
+```bash
+docker compose up -d minio minio-init
+```
+
+MinIO API tersedia di `http://localhost:9100` dan console di `http://localhost:9101`. Login development menggunakan `minioadmin` / `minioadmin`. Service `minio-init` otomatis membuat bucket `comic-videos`.
+
+Gunakan konfigurasi MinIO yang tersedia di `backend/.env.example`, lalu restart backend dan Celery worker setelah mengganti konfigurasi storage.
+
 ---
 
 ## ⚙️ Environment Variables (.env)
