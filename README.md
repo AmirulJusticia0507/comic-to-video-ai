@@ -88,6 +88,12 @@ MinIO API tersedia di `http://localhost:9100` dan console di `http://localhost:9
 
 Gunakan konfigurasi MinIO yang tersedia di `backend/.env.example`, lalu restart backend dan Celery worker setelah mengganti konfigurasi storage.
 
+Redis 7 untuk Celery tersedia pada `localhost:6380` dan dapat dijalankan bersama MinIO:
+
+```bash
+docker compose up -d redis minio minio-init
+```
+
 ---
 
 ## ⚙️ Environment Variables (.env)
@@ -96,7 +102,7 @@ Gunakan konfigurasi MinIO yang tersedia di `backend/.env.example`, lalu restart 
 
 ```env
 DATABASE_URL=postgresql://user:password@ep-cool-site-123456.us-east-2.aws.neon.tech/neondb?sslmode=require
-REDIS_URL=redis://localhost:6379/0
+REDIS_URL=redis://localhost:6380/0
 
 SECRET_KEY=your_super_secret_jwt_key
 ALGORITHM=HS256
