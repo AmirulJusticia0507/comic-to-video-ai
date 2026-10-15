@@ -91,12 +91,13 @@ def render_panel(self, panel_id: str, job_id: str):
         raise
     except Exception as exc:
         db.rollback()
-        job = _get_job(db, job_id, panel_id)
-        if job is not None:
-            job.status = "FAILED"
-            job.error_message = str(exc)[:1000]
-            db.commit()
-            publish_job_event(job)
+        if self.request.retries >= self.max_retries:
+            job = _get_job(db, job_id, panel_id)
+            if job is not None:
+                job.status = "FAILED"
+                job.error_message = str(exc)[:1000]
+                db.commit()
+                publish_job_event(job)
         raise
     finally:
         db.close()
