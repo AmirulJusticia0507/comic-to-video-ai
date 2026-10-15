@@ -31,7 +31,7 @@ Aplikasi ini dirancang dengan arsitektur **Asynchronous Job Queue** untuk menang
 
 ```bash
 # Clone repository
-git clone https://github.com/your-username/comic-to-video-ai.git
+git clone https://github.com/AmirulJusticia0507/comic-to-video-ai.git
 cd comic-to-video-ai/backend
 
 # Buat virtual environment
@@ -55,6 +55,19 @@ Jalankan juga Celery Worker di terminal terpisah:
 
 ```bash
 celery -A app.core.celery_app worker --loglevel=info
+```
+
+Di Windows wajib tambah `--pool=solo` (pool `prefork` crash dengan
+`ValueError` di `fast_trace_task` pada Celery 5.6):
+
+```bash
+celery -A app.core.celery_app worker --loglevel=info --pool=solo
+```
+
+Jalankan juga Celery Beat bila ingin requeue/reaper otomatis tiap 5 menit:
+
+```bash
+celery -A app.core.celery_app.celery_app beat --loglevel=info
 ```
 
 ---
@@ -176,6 +189,59 @@ Endpoint `POST /api/v1/panels/import-archive` (`multipart/form-data`: `project_i
 Batas aman: arsip maks 200 MB, maks 100 gambar, 20 MB per gambar, total hasil ekstrak 500 MB. Arsip bersarang (nested archive), arsip terenkripsi, path traversal (`../`, absolute path), dan file yang magic bytes-nya bukan PNG/JPEG/WebP ditolak. Panel diurutkan natural berdasarkan nama file.
 
 Kebutuhan binary RAR: di Windows, `C:\Program Files\WinRAR\UnRAR.exe` terdeteksi otomatis. Di production (Linux), install `unrar` (mis. `apt-get install unrar`) sehingga tersedia di `PATH`, atau set `UNRAR_TOOL=/usr/bin/unrar`.
+
+---
+
+## 🛠️ Troubleshooting
+
+### Job macet di `PENDING`, antrean Redis kosong
+
+Urutan yang benar adalah `db.commit()` **sebelum** `send_task`
+(`backend/app/api/generations.py`). Versi lama mengirim task sebelum commit,
+sehingga worker yang cepat tidak menemukan job di DB, menganggapnya orphan,
+dan job tertinggal di `PENDING` permanen. Worker sekarang retry 3x bila job
+belum terlihat, dan hanya menandai `orphan` setelah retry habis.
+
+Pulihkan job `PENDING` yang macet (hanya `PENDING` yang `updated_at`-nya
+lebih dari 120 detik yang di-requeue; job `FAILED` harus di-render ulang):
+
+```bash
+celery -A app.core.celery_app.celery_app call comic_video.requeue_pending_jobs
+```
+
+### `Received unregistered task of type 'comic_to_video.render_panel'`
+
+Nama task yang dikirim API harus sama dengan yang didaftarkan worker
+(`comic_video.render_panel`, lihat `RENDER_PANEL_TASK` di
+`backend/app/core/celery_app.py`). Bila error ini muncul setelah update kode,
+**restart API dan worker** — proses Python yang sudah berjalan tidak membaca
+kode baru. Cek kolom `origin` di header pesan untuk tahu proses pengirim yang
+masih memakai kode lama, lalu `taskkill /PID <pid> /F`.
+
+### Perubahan `.env` tidak berpengaruh
+
+`get_settings()` di-cache (`lru_cache`), jadi restart API dan worker setiap
+kali mengubah `backend/.env`.
+
+### `video provider is not configured`
+
+Isi `VIDEO_API_KEY_ID` dan `VIDEO_API_KEY_SECRET` di `backend/.env` dengan
+kredensial dari https://console.higgsfield.ai, lalu restart API dan worker.
+Uji kredensial dulu tanpa antrean lewat script contoh (baca `HF_KEY` dari
+`backend/.env.local` dengan format `key-id:key-secret`):
+
+```bash
+python examples\higgsfield_seedance.py
+```
+
+`invalid credentials` = key salah; `not_enough_credits` = key valid tapi
+kuota habis, top up di console yang sama. Jangan render dari UI sebelum script
+contoh berhasil — job yang gagal ikut menandai `FAILED`.
+
+### `missed heartbeat` / `mingle: sync with N nodes`
+
+Ada worker ganda yang hidup dan berebut antrean. Matikan proses Celery yang
+tidak dipakai (`Get-Process python` lalu `taskkill`).
 
 ---
 
