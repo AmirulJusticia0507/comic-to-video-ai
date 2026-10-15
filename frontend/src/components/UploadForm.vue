@@ -14,6 +14,7 @@ const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp']
 const MAX_SIZE_BYTES = 20 * 1024 * 1024
 
 const files = ref([])
+const filePreviews = ref(new Map())
 const motionPrompt = ref('')
 const uploading = ref(false)
 const uploadProgress = ref('')
@@ -33,7 +34,15 @@ function clearArchivePreviews() {
   archivePreviews.value = []
 }
 
-onBeforeUnmount(clearArchivePreviews)
+function clearFilePreviews() {
+  for (const url of filePreviews.value.values()) URL.revokeObjectURL(url)
+  filePreviews.value.clear()
+}
+
+onBeforeUnmount(() => {
+  clearFilePreviews()
+  clearArchivePreviews()
+})
 
 function naturalCompare(a, b) {
   return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
@@ -97,11 +106,15 @@ function addFiles(selected) {
       break
     }
     files.value.push(item)
+    filePreviews.value.set(item, URL.createObjectURL(item))
   }
   if (skipped.length) error.value = skipped.join('; ')
 }
 
 function removeFile(index) {
+  const item = files.value[index]
+  URL.revokeObjectURL(filePreviews.value.get(item))
+  filePreviews.value.delete(item)
   files.value.splice(index, 1)
 }
 
@@ -143,6 +156,7 @@ async function submit() {
     }
     const done = total
     files.value = []
+    clearFilePreviews()
     motionPrompt.value = ''
     uploadProgress.value = ''
     success.value = total > 1 ? `Uploaded ${done} panel(s)` : success.value
@@ -225,23 +239,26 @@ async function importArchive() {
       <p v-if="!files.length" class="text-sm text-gray-500">
         Drag &amp; drop gambar komik di sini, atau klik untuk pilih (bisa banyak sekaligus)
       </p>
-      <div v-else class="w-full space-y-1">
-        <p v-for="(item, index) in files" :key="`${item.name}-${item.size}`" class="flex items-center justify-between gap-2 text-sm font-medium text-gray-900">
-          <span class="truncate">{{ item.name }}</span>
-          <button type="button" class="shrink-0 text-xs text-red-500 hover:underline" @click.stop="removeFile(index)">hapus</button>
-        </p>
+      <div v-else class="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
+        <article v-for="(item, index) in files" :key="`${item.name}-${item.size}`" class="overflow-hidden rounded-xl border border-white/10 bg-slate-950/70 text-left">
+          <img :src="filePreviews.get(item)" :alt="item.name" class="aspect-square w-full object-cover" />
+          <div class="flex items-center gap-2 px-2 py-2">
+            <span class="min-w-0 flex-1 truncate text-xs font-medium text-slate-300" :title="item.name">{{ item.name }}</span>
+            <button type="button" class="shrink-0 text-xs text-rose-400 hover:text-rose-300" aria-label="Hapus gambar" @click.stop="removeFile(index)">&times;</button>
+          </div>
+        </article>
       </div>
       <p class="mt-1 text-xs text-gray-400">PNG, JPEG, or WebP — maks 20 MB per gambar, 100 file sekaligus</p>
     </div>
 
     <label class="mt-3 block text-sm font-semibold text-white" for="motion-prompt">Motion prompt</label>
-    <input
+    <textarea
       id="motion-prompt"
       v-model="motionPrompt"
-      type="text"
+      rows="3"
       placeholder="Sekali isi saja, berlaku untuk semua gambar (optional)"
-      class="field mt-1"
-    />
+      class="field mt-1 resize-none"
+    ></textarea>
     <p class="mt-1 text-xs text-slate-500">Satu prompt dipakai untuk semua gambar, baik upload file maupun import arsip.</p>
 
     <p v-if="error" class="mt-2 text-sm text-red-500">{{ error }}</p>

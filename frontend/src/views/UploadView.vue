@@ -12,7 +12,7 @@ const title = ref('')
 const project = ref(null)
 const panels = ref([])
 const previews = ref({})
-const prompts = ref({})
+const motionPrompt = ref('')
 const manualUrl = ref('')
 const uploadMode = ref('file')
 const selectedFiles = ref([])
@@ -61,7 +61,7 @@ async function uploadOne(file, order) {
       project_id: project.value.id,
       image_url: presigned.key,
       panel_order: order,
-      motion_prompt: prompts.value[file.name] || null,
+      motion_prompt: motionPrompt.value || null,
     },
   })
   panels.value.push(panel)
@@ -81,6 +81,7 @@ async function uploadFiles() {
       order += 1
     }
     selectedFiles.value = []
+    motionPrompt.value = ''
   } catch (e) {
     if (e.status === 404) {
       uploadMode.value = 'url'
@@ -108,11 +109,12 @@ async function addManualPanel() {
         project_id: project.value.id,
         image_url: manualUrl.value,
         panel_order: panels.value.length,
-        motion_prompt: null,
+        motion_prompt: motionPrompt.value || null,
       },
     })
     panels.value.push(panel)
     manualUrl.value = ''
+    motionPrompt.value = ''
   } catch (e) {
     error.value = e.message
   } finally {
@@ -192,23 +194,33 @@ async function resolveVideo(jobId) {
 
         <div v-if="uploadMode === 'file'" class="space-y-3">
           <input type="file" accept="image/png,image/jpeg,image/webp" multiple @change="onFilesPicked" />
-          <div v-for="file in selectedFiles" :key="file.name" class="flex items-center gap-3 border rounded p-2">
-            <img v-if="previews[file.name]" :src="previews[file.name]" class="w-16 h-16 object-cover rounded" />
-            <div class="flex-1">
-              <p class="text-sm font-medium truncate">{{ file.name }}</p>
-              <input v-model="prompts[file.name]" placeholder="Motion prompt (optional)" class="field mt-2" />
-            </div>
+          <div v-if="selectedFiles.length" class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <article v-for="file in selectedFiles" :key="file.name" class="overflow-hidden rounded-xl border border-white/10 bg-white/[0.04]">
+              <img v-if="previews[file.name]" :src="previews[file.name]" :alt="file.name" class="aspect-square w-full object-cover" />
+              <p class="truncate px-3 py-2 text-xs font-medium text-slate-300" :title="file.name">{{ file.name }}</p>
+            </article>
+          </div>
+          <div v-if="selectedFiles.length">
+            <label for="upload-motion-prompt" class="mb-2 block text-sm font-semibold text-white">Motion prompt</label>
+            <textarea id="upload-motion-prompt" v-model="motionPrompt" rows="3" placeholder="Contoh: kamera perlahan zoom in, rambut dan pakaian bergerak tertiup angin" class="field resize-none"></textarea>
+            <p class="mt-1 text-xs text-slate-500">Prompt ini digunakan untuk semua gambar yang dipilih.</p>
           </div>
           <button @click="uploadFiles" :disabled="busy || selectedFiles.length === 0" class="btn-primary">
             Upload panels
           </button>
         </div>
 
-        <div v-else class="flex gap-2">
-          <input v-model="manualUrl" placeholder="https://... image URL" class="field flex-1" />
-          <button @click="addManualPanel" :disabled="busy || !manualUrl" class="btn-primary">
-            Add
-          </button>
+        <div v-else class="space-y-3">
+          <div class="flex gap-2">
+            <input v-model="manualUrl" placeholder="https://... image URL" class="field flex-1" />
+            <button @click="addManualPanel" :disabled="busy || !manualUrl" class="btn-primary">
+              Add
+            </button>
+          </div>
+          <div>
+            <label for="url-motion-prompt" class="mb-2 block text-sm font-semibold text-white">Motion prompt</label>
+            <textarea id="url-motion-prompt" v-model="motionPrompt" rows="3" placeholder="Contoh: kamera perlahan zoom in, rambut dan pakaian bergerak tertiup angin" class="field resize-none"></textarea>
+          </div>
         </div>
 
         <ul class="mt-4 space-y-2">
